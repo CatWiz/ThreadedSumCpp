@@ -26,11 +26,6 @@ vecint create_min_test_vector(int size)
     return vec;
 }
 
-int rand_range(int min, int max)
-{
-    return std::rand() % (max - min) + min;
-}
-
 std::string pick_method()
 {
     std::cout << "Choose function:" << std::endl;
@@ -84,7 +79,7 @@ std::pair<int, int> vector_find_min(vecint vec)
     {
         if (vec[i] < min)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(rand_range(1, 2)));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #pragma omp critical
             {
                 if (vec[i] < min)
@@ -105,11 +100,13 @@ int main()
     std::string input = pick_method();
     int sum;
 
-    auto start = std::chrono::high_resolution_clock::now();
     if (input == "1" || input == "2") {
         vecint vec = create_sum_test_vector(size);
+        
+        auto start = std::chrono::high_resolution_clock::now();
         sum = input == "1" ? vector_sum_simple(vec) : vector_sum_halving(vec);
         auto end = std::chrono::high_resolution_clock::now();
+        
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         std::cout << "The sum is: " << sum << std::endl;
@@ -117,9 +114,11 @@ int main()
     }
     else {
         vecint vec = create_min_test_vector(size);
-        auto pair = vector_find_min(vec);
 
+        auto start = std::chrono::high_resolution_clock::now();
+        auto pair = vector_find_min(vec);
         auto end = std::chrono::high_resolution_clock::now();
+
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         std::cout << "Min element: " << pair.first << std::endl;
