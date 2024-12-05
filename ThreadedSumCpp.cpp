@@ -21,23 +21,23 @@ vecint create_min_test_vector(int size)
     vecint vec(size);
     std::fill(vec.begin(), vec.end(), 1);
     for (int i = 0; i < vec.size(); i += 3) {
-        vec[i] = -i;
+        vec[i] = size - i - 1;
     }
+    vec[size * 1 / 4] = -12;
     return vec;
 }
 
 std::string pick_method()
 {
     std::cout << "Choose function:" << std::endl;
-    std::cout << "1. Simple sum" << std::endl;
-    std::cout << "2. Sum with array halving" << std::endl;
-    std::cout << "3. Find min value and index" << std::endl;
+    std::cout << "1. 2 sums" << std::endl;
+    std::cout << "2. Find min value and index" << std::endl;
     std::string input;
     
     do
     {
         std::cin >> input;
-    } while (input != "1" && input != "2" && input != "3");
+    } while (input != "1" && input != "2");
 
     return input;
 }
@@ -79,7 +79,7 @@ std::pair<int, int> vector_find_min(vecint vec)
     {
         if (vec[i] < min)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
 #pragma omp critical
             if (vec[i] < min)
@@ -94,22 +94,46 @@ std::pair<int, int> vector_find_min(vecint vec)
 
 int main()
 {
-    int size = 1e4;
+    omp_set_nested(true);
+
+    int size = 1e8;
 
     std::string input = pick_method();
-    int sum;
 
-    if (input == "1" || input == "2") {
-        vecint vec = create_sum_test_vector(size);
-        
-        auto start = std::chrono::high_resolution_clock::now();
-        sum = input == "1" ? vector_sum_simple(vec) : vector_sum_halving(vec);
-        auto end = std::chrono::high_resolution_clock::now();
-        
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    if (input == "1") {
+        vecint vec1 = create_sum_test_vector(size);
+        vecint vec2 = create_sum_test_vector(size);
 
-        std::cout << "The sum is: " << sum << std::endl;
-        std::cout << "Calculation took " << duration.count() << " milliseconds";
+        int sum1, sum2;
+        std::chrono::milliseconds duration1, duration2;
+        
+#pragma omp sections
+        {
+#pragma omp section
+            {
+                auto start = std::chrono::high_resolution_clock::now();
+                sum1 = vector_sum_simple(vec1);
+                auto end = std::chrono::high_resolution_clock::now();
+                
+                duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            }
+#pragma omp section
+            {
+                auto start = std::chrono::high_resolution_clock::now();
+                sum2 = vector_sum_simple(vec2);
+                auto end = std::chrono::high_resolution_clock::now();
+
+                duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            }
+        }
+        
+        std::cout << "Simple sum" << std::endl;
+        std::cout << "The sum is: " << sum1 << std::endl;
+        std::cout << "Calculation took " << duration1.count() << " milliseconds" << std::endl;
+        std::cout << "--------------" << std::endl;
+        std::cout << "Halving sum" << std::endl;
+        std::cout << "The sum is: " << sum2 << std::endl;
+        std::cout << "Calculation took " << duration2.count() << " milliseconds" << std::endl;
     }
     else {
         vecint vec = create_min_test_vector(size);
