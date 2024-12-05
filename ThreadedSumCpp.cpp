@@ -80,14 +80,13 @@ std::pair<int, int> vector_find_min(vecint vec)
         if (vec[i] < min)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
 #pragma omp critical
+            if (vec[i] < min)
             {
-                if (vec[i] < min)
-                {
-                    min = vec[i];
-                    index = i;
-                }
-            }
+                min = vec[i];
+                index = i;
+            }            
         }
     }
     return std::pair<int, int>(min, index);
